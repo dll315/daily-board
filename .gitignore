@@ -1,0 +1,5 @@
+# 运行时数据（含密码哈希、API Key、Webhook 等敏感信息，不入库）
+data/
+
+__pycache__/
+*.pyc

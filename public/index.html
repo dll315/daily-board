@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>每日看板 · 古诗 / 科技简报 / 提醒</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌅</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">🌅 每日看板<span class="brand-sub" id="dateText"></span></div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" id="btnRefreshAll" title="重新拉取三个栏目的最新数据"><span class="icon">⟳</span> 刷新</button>
+    <button class="btn btn-primary" id="btnSettings">⚙ 设置</button>
+  </div>
+</header>
+
+<main class="board">
+
+  <section class="card" style="--accent:#8b5cf6">
+    <div class="card-head">
+      <span class="card-icon">📜</span><h2>每日古诗</h2>
+      <span class="badge" id="poemBadge"></span>
+    </div>
+    <div class="card-body poem-body" id="poemBody"><div class="loading">加载中…</div></div>
+    <div class="card-foot">
+      <button class="btn" id="btnPoemRefresh">换一首</button>
+      <button class="btn btn-soft admin-only hidden" id="btnPoemPush">🔔 推送预览</button>
+    </div>
+  </section>
+
+  <section class="card" style="--accent:#0ea5e9">
+    <div class="card-head">
+      <span class="card-icon">🤖</span><h2>每日科技简报</h2>
+      <span class="badge" id="briefingBadge"></span>
+    </div>
+    <div class="card-body briefing-body" id="briefingBody"><div class="loading">加载中…</div></div>
+    <div class="card-foot">
+      <button class="btn" id="btnBriefingRefresh">刷新</button>
+      <button class="btn btn-soft admin-only hidden" id="btnBriefingPush">🔔 推送预览</button>
+    </div>
+  </section>
+
+  <section class="card" style="--accent:#f59e0b">
+    <div class="card-head">
+      <span class="card-icon">⏰</span><h2>每日提醒</h2>
+      <span class="badge" id="reminderBadge"></span>
+    </div>
+    <div class="card-body">
+      <form class="reminder-form" id="reminderForm">
+        <input type="text" id="reminderInput" maxlength="200" placeholder="添加提醒内容，如：下午 3 点开会" autocomplete="off">
+        <button class="btn btn-primary" type="submit">添加</button>
+      </form>
+      <ul class="reminder-list" id="reminderList"></ul>
+    </div>
+    <div class="card-foot">
+      <span class="muted" id="reminderSummary"></span>
+      <button class="btn btn-soft admin-only hidden" id="btnRemindersPush">🔔 推送预览</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- 管理设置弹窗 -->
+<div class="modal hidden" id="adminModal">
+  <div class="modal-mask"></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3 id="modalTitle">管理设置</h3>
+      <button class="modal-close" id="btnCloseModal" title="关闭">✕</button>
+    </div>
+
+    <!-- 登录视图 -->
+    <div id="loginView" class="modal-body login-view hidden">
+      <p class="muted">请输入管理密码进入管理页面</p>
+      <input type="password" id="passwordInput" class="input-lg" placeholder="管理密码">
+      <button class="btn btn-primary btn-lg" id="btnLogin">进入管理</button>
+      <p class="tip">默认密码：<code>admin123</code>（登录后可在管理页修改）</p>
+    </div>
+
+    <!-- 管理视图 -->
+    <div id="adminView" class="modal-body hidden">
+
+      <section class="admin-section">
+        <h4>🔔 企业微信机器人</h4>
+        <label class="field">
+          <span>Webhook 地址</span>
+          <input type="text" id="cfgWebhook" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx">
+        </label>
+        <p class="tip">在企业微信群聊 → 右键群设置 → 添加群机器人 → 复制 Webhook 地址粘贴到这里</p>
+        <div class="btn-row">
+          <button class="btn" id="btnWechatPreview">🔔 推送预览（测试消息）</button>
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <h4>🧠 AI 助理（管理科技简报）</h4>
+        <label class="switch-row">
+          <input type="checkbox" id="cfgAiEnabled"><span>启用 AI 助理，将当日新闻整理为科技简报</span>
+        </label>
+        <div id="aiFields">
+          <label class="field"><span>API 地址（OpenAI 兼容）</span>
+            <input type="text" id="cfgAiBaseUrl" placeholder="https://api.openai.com/v1">
+          </label>
+          <label class="field"><span>API Key</span>
+            <input type="password" id="cfgAiKey" placeholder="sk-...">
+          </label>
+          <label class="field"><span>模型</span>
+            <input type="text" id="cfgAiModel" placeholder="gpt-4o-mini / deepseek-chat / glm-4-flash …">
+          </label>
+          <label class="field"><span>简报生成提示词</span>
+            <textarea id="cfgAiPrompt" rows="4"></textarea>
+          </label>
+        </div>
+        <p class="tip">支持任意 OpenAI 兼容接口（OpenAI / DeepSeek / Kimi / 智谱 / 各类中转）。关闭 AI 时简报直接展示新闻列表。</p>
+        <div class="btn-row">
+          <button class="btn" id="btnAiTest">测试 AI 连接</button>
+          <button class="btn" id="btnAiPreview">✨ 生成简报预览</button>
+          <button class="btn btn-soft" id="btnAiPush">🔔 推送简报预览</button>
+        </div>
+        <pre class="preview-box hidden" id="aiPreviewBox"></pre>
+      </section>
+
+      <section class="admin-section">
+        <h4>⏰ 定时推送</h4>
+        <div class="schedule-row">
+          <span class="schedule-name">📜 每日古诗</span>
+          <label class="switch"><input type="checkbox" id="cfgSchedPoemEnabled"><i></i></label>
+          <input type="time" id="cfgSchedPoemTime" value="08:00">
+          <button class="btn btn-sm" data-push="poem">推送预览</button>
+        </div>
+        <div class="schedule-row">
+          <span class="schedule-name">🤖 科技简报</span>
+          <label class="switch"><input type="checkbox" id="cfgSchedBriefingEnabled"><i></i></label>
+          <input type="time" id="cfgSchedBriefingTime" value="08:30">
+          <button class="btn btn-sm" data-push="briefing">推送预览</button>
+        </div>
+        <div class="schedule-row">
+          <span class="schedule-name">⏰ 每日提醒</span>
+          <label class="switch"><input type="checkbox" id="cfgSchedRemindersEnabled"><i></i></label>
+          <input type="time" id="cfgSchedRemindersTime" value="09:00">
+          <button class="btn btn-sm" data-push="reminders">推送预览</button>
+        </div>
+        <p class="tip">定时推送由本地服务执行：需保持 <code>python server.py</code>（或 start.bat）持续运行，每天到点自动推送到企业微信。修改时间并保存后当天立即生效。</p>
+      </section>
+
+      <div class="btn-row admin-save-row">
+        <button class="btn btn-primary btn-lg" id="btnSaveConfig">💾 保存配置</button>
+      </div>
+
+      <section class="admin-section">
+        <h4>🔒 修改管理密码</h4>
+        <div class="pwd-row">
+          <input type="password" id="oldPassword" placeholder="原密码">
+          <input type="password" id="newPassword" placeholder="新密码（至少 6 位）">
+          <button class="btn" id="btnChangePassword">修改密码</button>
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <h4>📋 推送日志</h4>
+        <ul class="log-list" id="logList"><li class="muted">暂无日志</li></ul>
+      </section>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnLogout">退出登录</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
