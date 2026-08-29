@@ -14,6 +14,7 @@ import sys
 REPO = 'dll315/daily-board'
 BRANCH = 'main'
 FILES = ['.gitignore', 'README.md', 'push.py', 'server.py', 'start.bat',
+         'Dockerfile', 'docker-compose.yml',
          'public/app.js', 'public/index.html', 'public/style.css']
 
 

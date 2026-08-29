@@ -4,7 +4,7 @@ services:
     image: daily-board:latest
     container_name: daily-board
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     volumes:
       - ./data:/app/data
     restart: unless-stopped   # 常驻运行，保证定时推送不掉线
