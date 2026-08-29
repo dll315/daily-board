@@ -51,13 +51,16 @@ python server.py        # 或直接双击 start.bat
 
 ```
 daily-board/
-├── server.py        # 后端服务（零依赖）
-├── start.bat        # Windows 一键启动
-├── public/          # 前端页面
+├── server.py            # 后端服务（零依赖）
+├── start.bat            # Windows 一键启动
+├── Dockerfile           # Docker 镜像构建
+├── docker-compose.yml   # Docker 编排（端口可用 PORT 变量）
+├── push.py              # GitHub API 备用推送通道（git 被阻断时用）
+├── public/              # 前端页面
 │   ├── index.html
 │   ├── style.css
 │   └── app.js
-└── data/            # 运行时自动生成
+└── data/                # 运行时自动生成（不入库）
     ├── config.json      # 配置（密码为哈希存储）
     ├── reminders.json   # 提醒数据
     ├── pushlog.json     # 推送日志
@@ -81,7 +84,26 @@ docker compose down              # 停止
   docker pull docker.m.daocloud.io/library/python:3.12-slim
   docker tag docker.m.daocloud.io/library/python:3.12-slim python:3.12-slim
   ```
-- 本机 3000 端口被占用时，把 `docker-compose.yml` 里端口映射改成如 `"3001:3000"`
+
+### 自定义端口
+
+通过 `PORT` 环境变量指定宿主机访问端口（容器内固定 3000，不影响数据）：
+
+```bash
+PORT=3001 docker compose up -d --build   # 用 3001 端口启动
+docker compose down && PORT=3001 docker compose up -d   # 已运行时先停再换端口
+docker compose up -d                     # 恢复默认 3000
+```
+
+Windows CMD：`set PORT=3001 && docker compose up -d --build`；PowerShell：`$env:PORT=3001; docker compose up -d --build`
+
+不用 compose 时，也可以直接 `docker run` 映射：
+
+```bash
+docker run -d --name daily-board -p 3001:3000 -v ./data:/app/data --restart unless-stopped daily-board:latest
+```
+
+- 本机 3000 端口被占用时，把 `docker-compose.yml` 里端口映射改成如 `"3001:3000"`，或直接用上面的 `PORT` 变量
 
 ## 获取代码 / 拉取更新
 
@@ -103,5 +125,5 @@ python server.py
 
 ## 常用环境变量
 
-- `PORT=3000`：服务端口
-- `NO_OPEN=1`：启动时不自动打开浏览器
+- `PORT=3000`：服务端口。直接运行时是服务监听端口；Docker compose 里是**宿主机**访问端口（容器内固定 3000），如 `PORT=3001 docker compose up -d`
+- `NO_OPEN=1`：启动时不自动打开浏览器（Docker 镜像内已默认设置）
