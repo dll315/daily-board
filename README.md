@@ -64,6 +64,25 @@ daily-board/
     └── cache/           # 每日古诗 / 简报缓存
 ```
 
+## Docker 部署（推荐用于定时推送）
+
+定时推送要求服务常驻，用 Docker `restart: unless-stopped` 最省心：
+
+```bash
+docker compose up -d --build     # 构建并后台启动
+docker logs -f daily-board       # 查看日志
+docker compose down              # 停止
+```
+
+- 访问 <http://localhost:3000>；容器时区已设为 Asia/Shanghai，定时推送按北京时间触发
+- `./data` 挂载为数据卷：配置、提醒、缓存持久化，重建容器不丢失
+- 国内拉取基础镜像慢/失败时，先从镜像源拉取再构建：
+  ```bash
+  docker pull docker.m.daocloud.io/library/python:3.12-slim
+  docker tag docker.m.daocloud.io/library/python:3.12-slim python:3.12-slim
+  ```
+- 本机 3000 端口被占用时，把 `docker-compose.yml` 里端口映射改成如 `"3001:3000"`
+
 ## 获取代码 / 拉取更新
 
 仓库：<https://github.com/dll315/daily-board>
