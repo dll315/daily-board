@@ -64,6 +64,24 @@ daily-board/
     └── cache/           # 每日古诗 / 简报缓存
 ```
 
+## 获取代码 / 拉取更新
+
+仓库：<https://github.com/dll315/daily-board>
+
+```bash
+git clone https://github.com/dll315/daily-board.git
+cd daily-board
+python server.py
+```
+
+**网络受限时的备用通道**（github.com 直连被阻断、但 api.github.com 可用时）：
+
+- 推送更新：`python push.py "提交说明"`（走 GitHub API，需本机 `gh` CLI 已登录）
+- 拉取最新代码包：<https://api.github.com/repos/dll315/daily-board/tarball/main>
+  （curl 下载：`curl -L -o daily-board.tar.gz https://api.github.com/repos/dll315/daily-board/tarball/main`）
+
+> `data/` 目录不入库：密码、API Key、Webhook、提醒等均为各机器本地数据，换机部署后需重新配置。
+
 ## 常用环境变量
 
 - `PORT=3000`：服务端口
